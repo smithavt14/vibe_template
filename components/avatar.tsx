@@ -1,16 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { isEnvConfigured } from "@/lib/env";
+import Image from "next/image";
 
 interface AvatarProps {
   size?: 'small' | 'medium' | 'large'
 }
 
 export default async function Avatar({ size = 'medium' }: AvatarProps) {
-  const supabase = await createClient();
-  
-  // Check if user is authenticated
-  const { data: { user } } = await supabase.auth.getUser();
-  
   // Get size classes
   const sizeClasses = {
     small: 'w-8',
@@ -19,6 +16,24 @@ export default async function Avatar({ size = 'medium' }: AvatarProps) {
   }
   
   const avatarSize = sizeClasses[size];
+  
+  // If environment is not configured, show default avatar
+  if (!isEnvConfigured) {
+    return (
+      <Link href="/login">
+        <div tabIndex={0} className="avatar avatar-placeholder cursor-pointer">
+          <div className={`bg-neutral text-neutral-content ${avatarSize} rounded-full`}>
+            <span>U</span>
+          </div>
+        </div>
+      </Link>
+    );
+  }
+
+  const supabase = await createClient();
+  
+  // Check if user is authenticated
+  const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
     return (
@@ -48,7 +63,7 @@ export default async function Avatar({ size = 'medium' }: AvatarProps) {
       <div tabIndex={0} className={`avatar cursor-pointer ${profile?.avatar_url ? '' : 'avatar-placeholder'}`} title="View Profile">
         <div className={`${avatarSize} rounded-full bg-neutral text-neutral-content`}>
           {profile?.avatar_url ? (
-            <img src={profile.avatar_url} alt="Avatar" />
+            <Image src={profile.avatar_url} alt="Avatar" />
           ) : (
             <span>{displayChar}</span>
           )}
