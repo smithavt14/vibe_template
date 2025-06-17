@@ -36,28 +36,17 @@ export const isEnvConfigured = isServer
 
 // Helper function to get safe environment values for client-side use
 export const getClientEnv = () => {
-  console.log('getClientEnv called - clientEnv object:', clientEnv ? 'EXISTS' : 'NULL')
-  console.log('getClientEnv - isClientEnvConfigured:', isClientEnvConfigured)
-  
   if (!clientEnv) {
-    console.log('getClientEnv - returning empty strings because clientEnv is null')
     return {
       NEXT_PUBLIC_SUPABASE_URL: '',
       NEXT_PUBLIC_SUPABASE_ANON_KEY: '',
     }
   }
   
-  const result = {
+  return {
     NEXT_PUBLIC_SUPABASE_URL: clientEnv.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: clientEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   }
-  
-  console.log('getClientEnv - returning:', {
-    NEXT_PUBLIC_SUPABASE_URL: result.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'EMPTY',
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: result.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'EMPTY'
-  })
-  
-  return result
 }
 
 export type Env = z.infer<typeof clientEnvSchema> & z.infer<typeof serverEnvSchema> 
