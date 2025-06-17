@@ -4,258 +4,207 @@
 
 This guide will help you set up Supabase for your Vibe Template project using the modern connector approach.
 
+## Why Supabase for This Project?
+
+[Supabase](https://supabase.com/) is the perfect backend solution for this project. It provides a full PostgreSQL database with instant APIs, built-in authentication with Row Level Security, real-time subscriptions, and excellent TypeScript integration. The generous free tier (2 projects, 50k MAU) makes it ideal for development and small applications, while the intuitive dashboard and zero-config setup means you can focus on building your app instead of managing infrastructure. [View pricing details →](https://supabase.com/pricing)
+
 ## 1. Create a Supabase Project
 
-1. Go to [database.new](https://database.new) and create a new Supabase project
-2. When your project is up and running, you'll automatically get your connection details
+1. Go to [database.new](https://supabase.com/dashboard/new/new-project) and create a new Supabase project
 
-## 2. Set Up Your Database Schema
+2. Once your project is ready, get your connection details:
+   
+   **Step 1: Get your App Framework variables**
+   - In your project dashboard, click the **"Connect"** button in the header
+   - In the modal that opens, go to the **"App Frameworks"** tab
+   - Select **"Next.js"** and **"App Router"**
+   - Copy the `.env.local` content provided
+   
+   **Step 2: Get your Database URL**
+   - Still in the Connect modal, go to the **"ORM"** tab
+   - Select **"Drizzle"**
+   - Copy the `DATABASE_URL` provided (it will have `[password]` as a placeholder)
+   
+   **Step 3: Get your database password**
+   - Go to **Project Settings** > **Configuration** > **Database**
+   - Copy your database password (or reset it if you forgot it)
+   - Replace `[password]` in your `DATABASE_URL` with your actual password (remove the brackets)
 
-### Understanding Supabase Authentication
+## 2. Configure Environment Variables
 
-When you enable Supabase Authentication, it automatically creates an `auth.users` table that contains:
-- User ID (UUID)
-- Email, phone
-- Provider information (google, github, etc.)
-- Email confirmation status
-- Authentication metadata
-- Timestamps
+Create a `.env` file in your project root and add your Supabase credentials from the previous step:
 
-**You don't need to create a users table yourself** - Supabase manages this automatically.
-
-### Creating Your Profile Table
-
-The template includes a `profiles` table that references Supabase's auth users for additional user data:
-
-```bash
-# Generate the migration files from your schema
-pnpm db:generate
-
-# Push the schema to your Supabase database
-pnpm db:push
-```
-
-This will create:
-- **profiles** table (linked to Supabase's auth.users for additional user data like display_name, avatar_url, bio)
-
-The profiles table uses the auth user's UUID as a foreign key, which is the recommended pattern for extending user data in Supabase applications.
-
-You can modify the schemas in `db/schema/` and re-run the commands to update your database.
-
-## 3. Get Your Connection Variables
-
-In your Supabase dashboard, the connector will show you the exact values you need:
-
-- **Project URL**: Your unique Supabase URL
-- **Anon Key**: Your public anonymous key
-
-## 4. Configure Environment Variables
-
-Your `.env.local` file should already exist. Simply update it with your actual Supabase credentials:
+> **Note**: We use `.env` (not `.env.local`) because Drizzle ORM needs access to the `DATABASE_URL` for schema operations.
 
 ```env
 # Copy these values from your Supabase project connector
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-DATABASE_URL=your-database-connection-string
+DATABASE_URL=your-database-connection-string-with-actual-password
 
 # These are optional for basic usage
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key  # Only if you need admin operations
 SUPABASE_PROJECT_ID=your-project-ref
-DATABASE_URL=your-database-connection-string     # Only if using direct database access
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 **Minimal setup** only requires:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `DATABASE_URL`
 
-## 5. Test Your Connection
+## 3. Set Up Your Database Schema
 
-You can test your connection by creating a simple query. After setting up authentication and creating some users, you can query both the auth users and profiles:
+### Understanding Supabase Authentication
 
-**Create `app/test-db/page.tsx`:**
-```tsx
-import { createClient } from '@/lib/supabase/server'
+Supabase automatically creates an `auth.users` table that contains core authentication data:
+- User ID (UUID), email, phone
+- Provider information (google, github, etc.)
+- Email confirmation status and timestamps
 
-export default async function TestDatabase() {
-  const supabase = await createClient()
-  
-  // Test profiles table
-  const { data: profiles, error: profilesError } = await supabase
-    .from("profiles")
-    .select("*")
+**You don't need to create a users table yourself** - Supabase manages this automatically.
 
-  // Test auth users (requires service role key for admin access)
-  const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers()
+### Run the Migration
 
-  return (
-    <div className="p-8 space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold mb-4">Database Connection Test</h1>
-      </div>
-      
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Profiles Table</h2>
-        {profilesError ? (
-          <div className="text-red-500">Error: {profilesError.message}</div>
-        ) : (
-          <pre className="bg-base-200 p-4 rounded text-sm">
-            {JSON.stringify(profiles, null, 2)}
-          </pre>
-        )}
-      </div>
+The template includes a single, comprehensive migration that sets up everything you need:
 
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Auth Users (Admin View)</h2>
-        {authError ? (
-          <div className="text-red-500">Error: {authError.message}</div>
-        ) : (
-          <pre className="bg-base-200 p-4 rounded text-sm">
-            {JSON.stringify(authUsers?.users?.map(u => ({ 
-              id: u.id, 
-              email: u.email, 
-              created_at: u.created_at 
-            })) || [], null, 2)}
-          </pre>
-        )}
-      </div>
-    </div>
-  )
-}
+```bash
+# Push the migration to your Supabase database
+pnpm db:push
 ```
 
-## 6. Start the App and Test
+### ✨ What This Migration Creates
 
-1. Start the development server:
+**📋 Profiles Table**
+- Links to Supabase's `auth.users` for additional user data
+- Fields: `display_name`, `avatar_url`, `bio`, timestamps
+- Uses `user_id` as foreign key to `auth.users`
+
+**🔄 Automatic Profile Creation**
+- Database trigger that fires when users sign up
+- Automatically creates a profile record
+- Smart display name (uses metadata or falls back to email)
+
+**🔒 Row Level Security (RLS)**
+- Enables RLS on profiles table
+- Creates policies so users can only access their own data
+- Full CRUD protection (SELECT, INSERT, UPDATE, DELETE)
+
+**All of this happens automatically with one migration - no manual setup required!**
+
+## 4. Test Your Setup
+
+Now let's test your setup by creating a user and updating their profile:
+
+1. **Start the development server:**
    ```bash
    pnpm dev
    ```
 
-2. Visit your test page at `http://localhost:3000/test-db`
-3. You should see your profiles data displayed in JSON format (likely empty initially)
+2. **Create a new user account:**
+   - Visit `http://localhost:3000/login`
+   - Click on "Sign up" or create a new account
+   - Enter your email and password to create an account
+   - You should be redirected to the home page
 
-## 7. Authentication Setup
+3. **Test the profile functionality:**
+   - Visit `http://localhost:3000/profile`
+   - Update your display name, avatar URL, and bio
+   - Click "Save Profile"
+   - You should see a success message
 
-### How Supabase Authentication Works
+4. **Verify everything is working:**
+   - The profile should save successfully
+   - You should see your updated information displayed
+   - Try signing out and signing back in to confirm persistence
 
-Supabase provides a complete authentication system that:
+## 5. Set Up Supabase MCP in Cursor (Optional)
 
-1. **Automatically manages the `auth.users` table** - stores core authentication data
-2. **Handles all auth flows** - login, signup, password reset, email confirmation
-3. **Supports multiple providers** - email/password, OAuth (Google, GitHub, etc.)
-4. **Manages sessions** - JWT tokens, refresh tokens, session persistence
+Connect your AI tools to Supabase using the Model Context Protocol (MCP). This allows your AI assistants to interact with and query your Supabase projects on your behalf.
 
-### Your Profile Table Pattern
+### Step 1: Create a Personal Access Token (PAT)
 
-The recommended pattern (which this template follows) is:
+1. Go to your [Supabase settings](https://supabase.com/dashboard/account/tokens)
+2. Create a personal access token
+3. Give it a name that describes its purpose, like "Cursor MCP Server"
+4. Copy the token (you'll need it in the next step)
 
-1. **Supabase manages authentication** via `auth.users` table
-2. **Your app manages additional user data** via a `profiles` table that references the auth user ID
-3. **Automatic profile creation** when users sign up (via database triggers or application logic)
+### Step 2: Configure Cursor
 
-### Setting Up Authentication
+1. **Create the MCP directory:**
+   ```bash
+   mkdir -p .cursor
+   ```
 
-1. **Enable Authentication** in your Supabase dashboard:
-   - Go to Authentication > Settings
-   - Configure your site URL: `http://localhost:3000` (development) 
-   - Add redirect URLs as needed
+2. **Create the MCP configuration file:**
+   Create `.cursor/mcp.json` with the following content:
+   ```json
+   {
+     "mcpServers": {
+       "supabase": {
+         "command": "npx",
+         "args": [
+           "-y",
+           "@supabase/mcp-server-supabase@latest",
+           "--access-token",
+           "<personal-access-token>"
+         ]
+       }
+     }
+   }
+   ```
 
-2. **Configure providers** you want to support:
-   - Email/Password (enabled by default)
-   - OAuth providers (Google, GitHub, etc.)
+3. **Update the configuration:**
+   - Replace `<personal-access-token>` with your actual personal access token
+   - Save the file
 
-3. **Set up profile creation** - you can create a database trigger to automatically create a profile when a user signs up:
+4. **Verify the connection:**
+   - Open Cursor and navigate to Settings/MCP
+   - You should see a green active status after the server is successfully connected
 
-```sql
--- Run this in your Supabase SQL Editor
-create or replace function public.handle_new_user() 
-returns trigger as $$
-begin
-  insert into public.profiles (user_id, display_name)
-  values (new.id, new.email);
-  return new;
-end;
-$$ language plpgsql security definer;
+Once connected, your AI assistant can help you manage your Supabase projects, query databases, and more!
 
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
+---
+
+**🎉 Your Supabase integration is now complete!**
+
+## Additional Resources
+
+### Setting Up OAuth Providers (Optional)
+
+If you want to add OAuth providers like Google or GitHub:
+
+1. Go to **Authentication > Providers** in your Supabase dashboard
+2. Enable the provider you want (e.g., "Google")
+3. Add your OAuth credentials from the provider's console
+4. Add the redirect URL: `https://your-project-ref.supabase.co/auth/v1/callback`
+
+### Advanced Database Patterns
+
+**🔧 Extending the Schema**
+You can modify the schemas in `db/schema/` and generate new migrations:
+```bash
+# After updating schema files
+pnpm db:generate  # Creates new migration
+pnpm db:push      # Applies to database
 ```
 
-4. **Test the authentication** at `http://localhost:3000/login`
+**🔍 Database Inspection**
+```bash
+pnpm db:studio    # Opens Drizzle Studio to view/edit data
+```
 
-### OAuth Setup Example (Google):
-1. Go to **Authentication > Providers** in Supabase
-2. Enable "Google"
-3. Add your Google OAuth credentials from Google Console
-4. Add redirect URL: `https://your-project-ref.supabase.co/auth/v1/callback`
+**📊 Understanding the Security Model**
+The RLS policies ensure that:
+- Users can only see their own profile data
+- API calls automatically filter by authenticated user
+- No risk of data leakage between users
+- All database operations are secure by default
 
-## 8. Understanding the User Data Architecture
+### Next Steps
 
-### Why Separate `auth.users` and `profiles` Tables?
-
-This is the **recommended pattern** for Supabase applications:
-
-**`auth.users` table (managed by Supabase):**
-- Contains authentication-specific data: email, password hashes, provider info
-- Managed entirely by Supabase Auth system
-- You cannot modify this table structure
-- Includes: `id`, `email`, `email_confirmed_at`, `last_sign_in_at`, `raw_app_meta_data`, `raw_user_meta_data`, etc.
-
-**`profiles` table (managed by your app):**
-- Contains application-specific user data: display names, avatars, preferences, etc.
-- References the auth user via `user_id` foreign key
-- Fully customizable to your app's needs
-- Examples: `display_name`, `avatar_url`, `bio`, `preferences`, `subscription_tier`, etc.
-
-### Benefits of This Pattern:
-
-1. **Separation of Concerns**: Auth data vs. app data
-2. **Flexibility**: Customize user profiles without touching auth system
-3. **Security**: Auth table is protected, your profile table has custom RLS policies
-4. **Scalability**: Can have multiple related tables (user_preferences, user_settings, etc.)
-
-### No Database Migrations Needed for Auth
-
-When you enable Supabase Authentication, the `auth.users` table is created automatically. You only need to run migrations for your own tables (like `profiles`).
-
-## 9. Development Workflow
-
-### Working with User Data
-
-1. **User signs up** → Supabase creates entry in `auth.users`
-2. **Trigger creates profile** → Automatic profile creation in your `profiles` table
-3. **App queries both** → Use joins or separate queries as needed
-4. **User updates profile** → Your app updates the `profiles` table
-
-### Working with Drizzle ORM
-
-For the profiles table and any additional tables:
-
-1. Define your schema in `db/schema/`
-2. Generate migrations: `pnpm db:generate`
-3. Push to database: `pnpm db:push`
-4. View your data: `pnpm db:studio`
-
-## Common Issues
-
-### Connection Issues
-- Double-check your `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- Make sure your Supabase project is running (not paused)
-- Verify RLS policies allow the operations you're trying to perform
-
-### Authentication Issues
-- Ensure middleware is commented out during development
-- Check that auth providers are properly configured in Supabase
-- Verify redirect URLs match your app URL
-
-## Next Steps
-
-Your Supabase integration is now complete! You can:
-
-- **Add more tables** using the Table Editor
-- **Set up authentication** when ready
+You can now:
+- **Add more tables** using the Table Editor or by defining schemas in `db/schema/`
 - **Implement real-time features** with Supabase subscriptions
 - **Add file storage** for images/documents
 - **Create API routes** for server-side operations
