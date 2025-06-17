@@ -4,7 +4,7 @@ import { MdSunny, MdNightlight } from "react-icons/md"
 
 export default function ThemeController() {
   return (
-    <label className="swap swap-rotate">
+    <label className="swap swap-rotate btn btn-ghost btn-sm">
       {/* this hidden checkbox controls the state */}
       <input type="checkbox" className="theme-controller" value="sunset" />
 
