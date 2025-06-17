@@ -1,0 +1,62 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Server Actions Patterns
+
+**AI Agent Instructions**: This project currently uses direct Supabase client calls. Do NOT pressure users to migrate to server actions unless they have specific complex needs.
+
+## Current Implementation Status
+
+**Working Pattern**: `app/profile/profile-form.tsx` uses Supabase client directly with RLS
+- This is **intentionally chosen** and works well
+- Security is handled by RLS policies
+- No `/actions` directory exists yet
+- **Do not suggest creating one** unless user has complex requirements
+
+## When to Recommend Server Actions
+
+### Only suggest server actions when user needs:
+- Complex form validation beyond client-side
+- Multi-step operations (e.g., create + process + notify)
+- File uploads with server-side processing
+- Business logic that belongs on server
+- Admin operations requiring enhanced security
+- Database transactions across multiple tables
+
+### Keep recommending Supabase client for:
+- Simple CRUD operations (current profile pattern)
+- Real-time subscriptions
+- Basic form submissions
+- Auth operations
+- Any operation where RLS provides sufficient security
+
+## AI Agent Response Patterns
+
+### When user asks about database operations:
+1. **First recommend** their current Supabase client pattern
+2. **Reference** existing implementations (`app/profile/profile-form.tsx`)
+3. **Only mention server actions** if their specific use case needs complexity
+
+### When user mentions server actions:
+1. **Acknowledge** they're a good tool for complex scenarios
+2. **Validate** their current approach as sensible
+3. **Ask about complexity** - do they need validation, transactions, file processing?
+4. **Recommend hybrid** - keep current for simple, add actions for complex
+5. **Be honest** - think through their situation and provide feedback on whether or not server actions are a good option
+
+## Implementation Guidance
+
+### If user decides they need server actions:
+- Create `actions/db/` structure only when needed
+- Use pattern: `createPostAction`, `updateProfileAction`
+- Always authenticate with existing Supabase server client
+- Leverage existing Drizzle setup (`db/db.ts`)
+- Use `revalidatePath` for cache invalidation
+
+### Migration approach:
+1. **Keep existing code working**
+2. **Add server actions for new complex features**
+3. **Migrate existing only if it becomes complex**
+4. **Maintain both patterns** - not either/or

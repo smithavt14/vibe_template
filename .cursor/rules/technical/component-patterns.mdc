@@ -1,0 +1,155 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Component & Design Patterns
+
+Streamlined component architecture using DaisyUI + Tailwind with consistent layout patterns.
+
+## Core Layout Components
+
+### Section (Full Screen Areas)
+- **File**: `components/section.tsx`
+- **Purpose**: Full-screen sections with min-height and padding
+- **Usage**: Wrap page content that needs full viewport height
+- **Pattern**: `<Section className="flex items-center justify-center">`
+
+### Container (Content Wrapper)
+- **File**: `components/container.tsx`
+- **Purpose**: Max-width content container with responsive padding
+- **Usage**: Wrap all content inside Section for proper spacing
+- **Pattern**: `<Container className="text-center">`
+
+## Standard Layout Structure
+
+```tsx
+// Standard page layout pattern - see app/page.tsx
+<Section className="flex flex-col items-center justify-center">
+  <Container>
+    {/* Your content here */}
+  </Container>
+</Section>
+```
+
+## Component Architecture
+
+### Built Components
+- **Navbar**: `components/navbar.tsx` (uses Container for layout)
+- **Avatar**: `components/avatar.tsx` (server component with auth integration)
+- **ThemeController**: `components/theme-controller.tsx` (DaisyUI theme switcher)
+
+### Component Patterns
+
+**Server Components** (Default):
+- Use for data fetching and auth checks
+- Example: Avatar component fetches user profile server-side
+
+**Client Components** (When needed):
+- Add `"use client"` directive
+- Use for interactivity and state management
+- Example: Theme controller for client-side theme switching
+
+## DaisyUI Integration
+
+### Design System
+- **Theme System**: Multiple themes via data-theme attribute
+- **Component Classes**: Use DaisyUI semantic classes (`btn`, `card`, `avatar`)
+- **Responsive Design**: Built-in responsive utilities
+- **Reference**: See app/page.tsx for comprehensive DaisyUI usage
+
+### Common DaisyUI Patterns
+```tsx
+// Cards with semantic styling
+<div className="card bg-base-200 shadow">
+  <div className="card-body">
+    <h3 className="card-title">Title</h3>
+    <p>Content</p>
+    <div className="card-actions">
+      <button className="btn btn-primary">Action</button>
+    </div>
+  </div>
+</div>
+
+// Badges for status indicators
+<div className="badge badge-success">Status</div>
+
+// Steps for progress indication
+<div className="steps steps-horizontal">
+  <div className="step step-primary">Step 1</div>
+  <div className="step">Step 2</div>
+</div>
+```
+
+## Styling Guidelines
+
+### Class Organization
+1. **Layout classes first**: `flex`, `grid`, `container`
+2. **Spacing**: `p-4`, `m-2`, `gap-4`
+3. **Colors**: Use semantic DaisyUI colors (`bg-base-100`, `text-primary`)
+4. **States**: `hover:`, `focus:`, `active:`
+
+### Responsive Design
+- **Mobile First**: Default styles for mobile
+- **Breakpoints**: `md:`, `lg:`, `xl:` for larger screens
+- **Container**: Automatically responsive with Container component
+
+### Color System
+- **Base Colors**: `base-100`, `base-200`, `base-300` (surface colors)
+- **Semantic**: `primary`, `secondary`, `accent`, `success`, `warning`, `error`
+- **Content**: `base-content`, `primary-content` (text colors)
+
+## File Naming Conventions
+
+### Components
+- **kebab-case**: `avatar.tsx`, `theme-controller.tsx`
+- **Default exports**: For single components
+- **Named exports**: For utilities like Section
+
+### Pages
+- **App Router**: Use `page.tsx` in route folders
+- **Server components**: Default (no directives needed)
+- **Client components**: Add `"use client"` at top
+
+## Common Patterns
+
+### Auth-Aware Components
+```tsx
+// Pattern from components/avatar.tsx
+if (!user) {
+  return <DefaultState />
+}
+// Render authenticated state
+```
+
+### Conditional Rendering
+```tsx
+// Environment-aware rendering - see app/page.tsx
+if (!envConfigured) return <SetupScreen />
+if (!dbSetup) return <MigrationScreen />
+return <MainApp />
+```
+
+### Error Boundaries
+```tsx
+// Graceful fallbacks for missing data
+const displayName = profile?.display_name || user.email || 'Anonymous'
+```
+
+## Best Practices
+
+1. **Always use Container inside Section** for proper spacing
+2. **Leverage DaisyUI semantic classes** over custom CSS
+3. **Server components by default** - only use client when needed
+4. **Mobile-first responsive design** with Tailwind utilities
+5. **Consistent color semantics** using DaisyUI color system
+6. **Component composition** over complex single components
+
+## Integration Points
+
+- **Auth**: Components can check user state via Supabase
+- **Database**: Server components can fetch data directly
+- **Theming**: All components inherit from DaisyUI theme system
+- **Icons**: React Icons library for consistent iconography
+
+This architecture provides a solid foundation for scalable, maintainable UI components while leveraging DaisyUI's design system.

@@ -1,0 +1,28 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Database Patterns
+
+## Architecture
+- **Supabase + Drizzle ORM** for type-safe database operations
+- **RLS policies** for automatic data isolation
+- **Reference implementations**: See `db/schema/profiles.ts` and `app/profile/`
+
+## Key Patterns
+1. **Server-side queries**: Use Drizzle ORM (`db/db.ts`) for server components/actions
+2. **Client-side queries**: Use Supabase client with RLS (`lib/supabase/client.ts`)
+3. **Authentication**: Always check auth before database operations
+4. **Schema changes**: Generate migrations with `pnpm db:generate`
+
+## File References
+- Schema patterns: `db/schema/profiles.ts`
+- Database client: `db/db.ts`
+- Migration example: `db/migrations/0000_narrow_star_brand.sql`
+- Query examples: `app/profile/page.tsx`, `app/profile/profile-form.tsx`
+
+## Decision Guide
+- Use **Drizzle** for complex queries, joins, server actions
+- Use **Supabase client** for simple CRUD in client components
+- Always leverage **RLS** instead of manual filtering

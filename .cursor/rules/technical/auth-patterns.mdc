@@ -1,0 +1,86 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Authentication Patterns
+
+Simple Supabase authentication setup with automatic profile creation and RLS security.
+
+## Architecture
+
+- **Managed Auth**: Supabase handles `auth.users` table automatically
+- **Extended Profiles**: Custom `profiles` table linked via `user_id`
+- **RLS Security**: Automatic data isolation between users
+- **Auto Profile Creation**: Database triggers create profiles on signup
+
+## Key Implementation Files
+
+- **Auth UI**: `app/login/page.tsx` (email/password + OAuth)
+- **OAuth Callback**: `app/auth/callback/route.ts`
+- **Protected Route**: `app/profile/page.tsx` (server component pattern)
+- **Client Setup**: `lib/supabase/client.ts` & `lib/supabase/server.ts`
+- **Profile Schema**: `db/schema/profiles.ts`
+- **Migration**: `db/migrations/0000_narrow_star_brand.sql` (RLS + triggers)
+
+## Authentication Decision Guide
+
+### When to Use Each Approach
+
+**Server Component Protection** (Recommended for pages):
+```tsx
+// Pattern in app/profile/page.tsx
+const { data: { user } } = await supabase.auth.getUser()
+if (!user) redirect('/login')
+```
+
+**Client Component Protection** (For interactive components):
+```tsx
+// Check auth state, show loading while checking
+const [user, setUser] = useState(null)
+// See app/profile/profile-form.tsx for implementation
+```
+
+**Middleware Protection** (Currently disabled):
+```tsx
+// middleware.ts - can be enabled for global route protection
+```
+
+## User Data Access Patterns
+
+### Profile Operations
+- **Read**: Use `supabase.from('profiles').select().eq('user_id', user.id)`
+- **Update**: RLS automatically filters to current user
+- **Reference**: See `app/profile/profile-form.tsx` for full CRUD example
+
+### Getting Current User
+- **Server**: `await supabase.auth.getUser()`
+- **Client**: `supabase.auth.getUser()` in useEffect
+- **Sign Out**: `supabase.auth.signOut()`
+
+## Security Model
+
+### RLS Policies (Auto-Applied)
+- Users can only access their own profile data
+- Policies defined in migration: `db/migrations/0000_narrow_star_brand.sql`
+- No manual user ID filtering needed
+
+### Environment Setup
+- `NEXT_PUBLIC_SUPABASE_URL` - For client access
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - For client access  
+- `DATABASE_URL` - For Drizzle ORM operations
+
+## Best Practices
+
+1. **Server components first** - Check auth server-side when possible
+2. **Leverage RLS** - Let database handle user isolation
+3. **No custom users table** - Extend with profiles instead
+4. **Handle auth errors** - Always redirect to login on auth failure
+5. **Use middleware sparingly** - Per-route protection is clearer
+
+## Common Gotchas
+
+- **Client vs Server clients** - Different imports for different contexts
+- **Cookie handling** - Handled automatically by Supabase SSR
+- **OAuth redirects** - Must point to `/auth/callback` route
+- **Profile creation** - Automatic via database trigger, no manual creation needed
