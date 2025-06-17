@@ -1,0 +1,388 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Database Patterns
+
+## Schema Organization
+
+### **File Structure**
+```
+db/
+├── schema/
+│   ├── index.ts          # Export all schemas
+│   ├── users-schema.ts   # User-related tables
+│   ├── posts-schema.ts   # Post-related tables
+│   └── ...
+├── db.ts                 # Database client & schema object
+└── migrations/           # Auto-generated (don't touch)
+```
+
+### **Schema Export Pattern**
+```typescript
+// db/schema/index.ts
+export * from "./users-schema"
+export * from "./posts-schema"
+export * from "./comments-schema"
+```
+
+```typescript
+// db/db.ts
+import { drizzle } from "drizzle-orm/postgres-js"
+import postgres from "postgres"
+import { usersTable, postsTable, commentsTable } from "@/db/schema"
+
+const client = postgres(process.env.DATABASE_URL!)
+
+export const db = drizzle(client, {
+  schema: {
+    users: usersTable,
+    posts: postsTable,
+    comments: commentsTable
+  }
+})
+```
+
+## Basic Schema Patterns
+
+### **Standard Table Structure**
+```typescript
+// db/schema/examples-schema.ts
+import { boolean, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core"
+
+export const examplesTable = pgTable("examples", {
+  // Primary key - always use uuid with defaultRandom()
+  id: uuid("id").defaultRandom().primaryKey(),
+  
+  // User association - always use this format
+  userId: text("user_id").notNull(),
+  
+  // Content fields
+  title: text("title").notNull(),
+  content: text("content"),
+  isPublished: boolean("is_published").default(false).notNull(),
+  
+  // Standard timestamps - always include these
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date())
+})
+
+// Always export these types
+export type InsertExample = typeof examplesTable.$inferInsert
+export type SelectExample = typeof examplesTable.$inferSelect
+```
+
+### **Enum Usage**
+```typescript
+import { pgEnum, pgTable, text, uuid } from "drizzle-orm/pg-core"
+
+// Define enums at the top level
+export const statusEnum = pgEnum("status", ["active", "inactive", "pending"])
+export const roleEnum = pgEnum("role", ["user", "admin", "moderator"])
+
+export const usersTable = pgTable("users", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  email: text("email").notNull().unique(),
+  role: roleEnum("role").notNull().default("user"),
+  status: statusEnum("status").notNull().default("active"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date())
+})
+```
+
+### **Foreign Key Relationships**
+```typescript
+// Parent table
+export const chatsTable = pgTable("chats", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull(),
+  title: text("title").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date())
+})
+
+// Child table with foreign key
+export const messagesTable = pgTable("messages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  chatId: uuid("chat_id")
+    .references(() => chatsTable.id, { onDelete: "cascade" }) // Cascade delete
+    .notNull(),
+  content: text("content").notNull(),
+  role: roleEnum("role").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date())
+})
+
+export type InsertChat = typeof chatsTable.$inferInsert
+export type SelectChat = typeof chatsTable.$inferSelect
+export type InsertMessage = typeof messagesTable.$inferInsert
+export type SelectMessage = typeof messagesTable.$inferSelect
+```
+
+## Advanced Patterns
+
+### **Junction Tables (Many-to-Many)**
+```typescript
+// Users table
+export const usersTable = pgTable("users", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  email: text("email").notNull().unique(),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date())
+})
+
+// Projects table
+export const projectsTable = pgTable("projects", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date())
+})
+
+// Junction table for user-project relationships
+export const userProjectsTable = pgTable("user_projects", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .references(() => usersTable.id, { onDelete: "cascade" })
+    .notNull(),
+  projectId: uuid("project_id")
+    .references(() => projectsTable.id, { onDelete: "cascade" })
+    .notNull(),
+  role: text("role").notNull().default("member"), // member, admin, owner
+  joinedAt: timestamp("joined_at").defaultNow().notNull()
+})
+```
+
+### **Soft Deletes Pattern**
+```typescript
+export const postsTable = pgTable("posts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull(),
+  title: text("title").notNull(),
+  content: text("content"),
+  
+  // Soft delete pattern
+  deletedAt: timestamp("deleted_at"), // null = not deleted
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date())
+})
+
+// Helper function for filtering non-deleted records
+export const activePostsFilter = isNull(postsTable.deletedAt)
+```
+
+### **Indexing Patterns**
+```typescript
+import { index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core"
+
+export const postsTable = pgTable("posts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull(),
+  title: text("title").notNull(),
+  content: text("content"),
+  slug: text("slug").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date())
+}, (table) => ({
+  // Composite index for user posts ordered by creation
+  userCreatedAtIdx: index("posts_user_created_at_idx").on(table.userId, table.createdAt),
+  // Single column index for slug lookups
+  slugIdx: index("posts_slug_idx").on(table.slug)
+}))
+```
+
+## Query Patterns
+
+### **Basic Queries**
+```typescript
+import { db } from "@/db/db"
+import { postsTable } from "@/db/schema"
+import { eq, desc, and, isNull } from "drizzle-orm"
+
+// Get all posts for a user
+const userPosts = await db.query.posts.findMany({
+  where: eq(postsTable.userId, userId),
+  orderBy: desc(postsTable.createdAt)
+})
+
+// Get single post with error handling
+const post = await db.query.posts.findFirst({
+  where: and(
+    eq(postsTable.id, postId),
+    eq(postsTable.userId, userId) // User isolation
+  )
+})
+
+if (!post) {
+  throw new Error("Post not found")
+}
+```
+
+### **Relationships (WITH)**
+```typescript
+// Get chats with their messages
+const chatsWithMessages = await db.query.chats.findMany({
+  where: eq(chatsTable.userId, userId),
+  with: {
+    messages: {
+      orderBy: desc(messagesTable.createdAt),
+      limit: 10
+    }
+  }
+})
+
+// Get user with their projects
+const userWithProjects = await db.query.users.findFirst({
+  where: eq(usersTable.id, userId),
+  with: {
+    userProjects: {
+      with: {
+        project: true
+      }
+    }
+  }
+})
+```
+
+### **Aggregations**
+```typescript
+import { count, sum, avg } from "drizzle-orm"
+
+// Count posts by user
+const postCounts = await db
+  .select({
+    userId: postsTable.userId,
+    postCount: count(postsTable.id)
+  })
+  .from(postsTable)
+  .where(isNull(postsTable.deletedAt))
+  .groupBy(postsTable.userId)
+```
+
+## Date Handling
+
+### **Date Comparisons**
+```typescript
+// Get posts from last 7 days
+const recentPosts = await db.query.posts.findMany({
+  where: and(
+    eq(postsTable.userId, userId),
+    gte(postsTable.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+  )
+})
+
+// Always convert Date objects to ISO strings for comparisons
+const startDate = new Date("2024-01-01").toISOString()
+const endDate = new Date("2024-12-31").toISOString()
+
+const postsInRange = await db.query.posts.findMany({
+  where: and(
+    gte(postsTable.createdAt, startDate),
+    lte(postsTable.createdAt, endDate)
+  )
+})
+```
+
+### **Updating Timestamps**
+```typescript
+// Manual timestamp update
+await db
+  .update(postsTable)
+  .set({
+    content: newContent,
+    updatedAt: new Date() // updatedAt will auto-update due to $onUpdate
+  })
+  .where(eq(postsTable.id, postId))
+```
+
+## Migration Best Practices
+
+### **Schema Changes**
+```bash
+# Generate migration after schema changes
+pnpm db:generate
+
+# Push to database
+pnpm db:push
+
+# Never manually edit migration files
+# Never delete migration files
+```
+
+### **Breaking Changes**
+```typescript
+// Instead of renaming columns, add new and deprecate old
+export const usersTable = pgTable("users", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  email: text("email").notNull().unique(),
+  
+  // Old column (deprecated)
+  displayName: text("display_name"), // Keep for backwards compatibility
+  
+  // New column
+  fullName: text("full_name"), // New preferred field
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date())
+})
+```
+
+## Security Patterns
+
+### **User Isolation**
+```typescript
+// Always include user filtering in multi-tenant queries
+export async function getUserPosts(userId: string) {
+  return await db.query.posts.findMany({
+    where: and(
+      eq(postsTable.userId, userId), // Critical: user isolation
+      isNull(postsTable.deletedAt) // Only active posts
+    )
+  })
+}
+```
+
+### **RLS Integration**
+```sql
+-- Set up RLS policies in Supabase (run in SQL editor)
+ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can only see their own posts" 
+ON posts FOR SELECT 
+USING (auth.uid()::text = user_id);
+
+CREATE POLICY "Users can only insert their own posts" 
+ON posts FOR INSERT 
+WITH CHECK (auth.uid()::text = user_id);
+```

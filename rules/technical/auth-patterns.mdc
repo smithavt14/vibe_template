@@ -1,0 +1,657 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Authentication Patterns
+
+## Supabase Auth Setup
+
+### **Basic Configuration**
+```typescript
+// lib/supabase.ts
+import { createClientComponentClient, createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
+
+// Client-side auth client
+export const createClient = () => createClientComponentClient()
+
+// Server-side auth client
+export const createServerClient = () => createServerComponentClient({ cookies })
+```
+
+### **Environment Variables**
+```env
+# .env.local
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+## Server-Side Authentication
+
+### **Auth Helper Function**
+```typescript
+// lib/auth.ts
+import { createServerClient } from "@/lib/supabase"
+import { redirect } from "next/navigation"
+
+export async function getUser() {
+  const supabase = createServerClient()
+  
+  const {
+    data: { user },
+    error
+  } = await supabase.auth.getUser()
+
+  if (error || !user) {
+    return null
+  }
+
+  return user
+}
+
+export async function requireAuth() {
+  const user = await getUser()
+  
+  if (!user) {
+    redirect("/auth/login")
+  }
+
+  return user
+}
+
+// For server actions
+export async function auth() {
+  const user = await getUser()
+  
+  return {
+    user,
+    userId: user?.id || null,
+    isAuthenticated: !!user
+  }
+}
+```
+
+### **Protected Server Pages**
+```tsx
+// app/dashboard/page.tsx
+"use server"
+
+import { requireAuth } from "@/lib/auth"
+import { getUserData } from "@/actions/db/user-actions"
+
+export default async function DashboardPage() {
+  const user = await requireAuth() // Redirects if not authenticated
+  
+  const { data: userData } = await getUserData(user.id)
+
+  return (
+    <div>
+      <h1>Welcome, {user.email}</h1>
+      {/* Dashboard content */}
+    </div>
+  )
+}
+```
+
+### **Server Actions with Auth**
+```typescript
+// actions/db/user-actions.ts
+"use server"
+
+import { auth } from "@/lib/auth"
+import { ActionState } from "@/types"
+
+export async function updateProfileAction(
+  data: { name: string; bio: string }
+): Promise<ActionState<SelectUser>> {
+  try {
+    const { userId, isAuthenticated } = await auth()
+    
+    if (!isAuthenticated) {
+      return { 
+        isSuccess: false, 
+        message: "Authentication required" 
+      }
+    }
+
+    const [updatedUser] = await db
+      .update(usersTable)
+      .set({
+        name: data.name,
+        bio: data.bio,
+        updatedAt: new Date()
+      })
+      .where(eq(usersTable.id, userId))
+      .returning()
+
+    return {
+      isSuccess: true,
+      message: "Profile updated successfully",
+      data: updatedUser
+    }
+  } catch (error) {
+    console.error("Error updating profile:", error)
+    return { 
+      isSuccess: false, 
+      message: "Failed to update profile" 
+    }
+  }
+}
+```
+
+## Client-Side Authentication
+
+### **Auth Context Provider**
+```tsx
+// components/auth-provider.tsx
+"use client"
+
+import { createContext, useContext, useEffect, useState } from "react"
+import { User } from "@supabase/supabase-js"
+import { createClient } from "@/lib/supabase"
+
+interface AuthContextType {
+  user: User | null
+  loading: boolean
+  signOut: () => Promise<void>
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
+
+  useEffect(() => {
+    // Get initial session
+    const getInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      setUser(session?.user ?? null)
+      setLoading(false)
+    }
+
+    getInitialSession()
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setUser(session?.user ?? null)
+        setLoading(false)
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [supabase])
+
+  const signOut = async () => {
+    await supabase.auth.signOut()
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, loading, signOut }}>
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+export const useAuth = () => {
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider")
+  }
+  return context
+}
+```
+
+### **Protected Client Components**
+```tsx
+// components/protected-component.tsx
+"use client"
+
+import { useAuth } from "@/components/auth-provider"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
+
+interface ProtectedComponentProps {
+  children: React.ReactNode
+  fallback?: React.ReactNode
+}
+
+export default function ProtectedComponent({ 
+  children, 
+  fallback 
+}: ProtectedComponentProps) {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/auth/login")
+    }
+  }, [user, loading, router])
+
+  if (loading) {
+    return <div>Loading...</div>
+  }
+
+  if (!user) {
+    return fallback || <div>Redirecting...</div>
+  }
+
+  return <>{children}</>
+}
+```
+
+## Authentication Forms
+
+### **Login Form**
+```tsx
+// app/auth/login/_components/login-form.tsx
+"use client"
+
+import { useState } from "react"
+import { createClient } from "@/lib/supabase"
+import { useRouter } from "next/navigation"
+
+export default function LoginForm() {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  
+  const router = useRouter()
+  const supabase = createClient()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError("")
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
+
+    if (error) {
+      setError(error.message)
+    } else {
+      router.push("/dashboard")
+      router.refresh()
+    }
+
+    setIsLoading(false)
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="label">
+          <span className="label-text">Email</span>
+        </label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="input input-bordered w-full"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="label">
+          <span className="label-text">Password</span>
+        </label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="input input-bordered w-full"
+          required
+        />
+      </div>
+
+      {error && (
+        <div className="alert alert-error">
+          <span>{error}</span>
+        </div>
+      )}
+
+      <button
+        type="submit"
+        className="btn btn-primary w-full"
+        disabled={isLoading}
+      >
+        {isLoading ? "Signing in..." : "Sign In"}
+      </button>
+    </form>
+  )
+}
+```
+
+### **Signup Form**
+```tsx
+// app/auth/signup/_components/signup-form.tsx
+"use client"
+
+import { useState } from "react"
+import { createClient } from "@/lib/supabase"
+
+export default function SignupForm() {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState(false)
+  
+  const supabase = createClient()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError("")
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match")
+      setIsLoading(false)
+      return
+    }
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`
+      }
+    })
+
+    if (error) {
+      setError(error.message)
+    } else {
+      setSuccess(true)
+    }
+
+    setIsLoading(false)
+  }
+
+  if (success) {
+    return (
+      <div className="alert alert-success">
+        <span>Check your email to confirm your account!</span>
+      </div>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="label">
+          <span className="label-text">Email</span>
+        </label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="input input-bordered w-full"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="label">
+          <span className="label-text">Password</span>
+        </label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="input input-bordered w-full"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="label">
+          <span className="label-text">Confirm Password</span>
+        </label>
+        <input
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          className="input input-bordered w-full"
+          required
+        />
+      </div>
+
+      {error && (
+        <div className="alert alert-error">
+          <span>{error}</span>
+        </div>
+      )}
+
+      <button
+        type="submit"
+        className="btn btn-primary w-full"
+        disabled={isLoading}
+      >
+        {isLoading ? "Creating account..." : "Sign Up"}
+      </button>
+    </form>
+  )
+}
+```
+
+## OAuth Integration
+
+### **OAuth Providers**
+```tsx
+// components/oauth-buttons.tsx
+"use client"
+
+import { createClient } from "@/lib/supabase"
+
+export default function OAuthButtons() {
+  const supabase = createClient()
+
+  const handleOAuthSignIn = async (provider: "google" | "github") => {
+    await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
+    })
+  }
+
+  return (
+    <div className="space-y-2">
+      <button
+        onClick={() => handleOAuthSignIn("google")}
+        className="btn btn-outline w-full"
+      >
+        Continue with Google
+      </button>
+      
+      <button
+        onClick={() => handleOAuthSignIn("github")}
+        className="btn btn-outline w-full"
+      >
+        Continue with GitHub
+      </button>
+    </div>
+  )
+}
+```
+
+### **Auth Callback Handler**
+```tsx
+// app/auth/callback/route.ts
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
+import { NextRequest, NextResponse } from "next/server"
+
+export async function GET(request: NextRequest) {
+  const requestUrl = new URL(request.url)
+  const code = requestUrl.searchParams.get("code")
+
+  if (code) {
+    const supabase = createRouteHandlerClient({ cookies })
+    await supabase.auth.exchangeCodeForSession(code)
+  }
+
+  return NextResponse.redirect(`${requestUrl.origin}/dashboard`)
+}
+```
+
+## Row Level Security (RLS)
+
+### **Database Policies Setup**
+```sql
+-- Enable RLS on tables (run in Supabase SQL Editor)
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+
+-- Users can only see and edit their own profile
+CREATE POLICY "Users can view own profile" 
+ON users FOR SELECT 
+USING (auth.uid()::text = id);
+
+CREATE POLICY "Users can update own profile" 
+ON users FOR UPDATE 
+USING (auth.uid()::text = id);
+
+-- Posts policies
+CREATE POLICY "Users can view all posts" 
+ON posts FOR SELECT 
+USING (true);
+
+CREATE POLICY "Users can insert own posts" 
+ON posts FOR INSERT 
+WITH CHECK (auth.uid()::text = user_id);
+
+CREATE POLICY "Users can update own posts" 
+ON posts FOR UPDATE 
+USING (auth.uid()::text = user_id);
+
+CREATE POLICY "Users can delete own posts" 
+ON posts FOR DELETE 
+USING (auth.uid()::text = user_id);
+
+-- Comments policies
+CREATE POLICY "Users can view all comments" 
+ON comments FOR SELECT 
+USING (true);
+
+CREATE POLICY "Users can insert own comments" 
+ON comments FOR INSERT 
+WITH CHECK (auth.uid()::text = user_id);
+
+CREATE POLICY "Users can update own comments" 
+ON comments FOR UPDATE 
+USING (auth.uid()::text = user_id);
+
+CREATE POLICY "Users can delete own comments" 
+ON comments FOR DELETE 
+USING (auth.uid()::text = user_id);
+```
+
+### **RLS-Aware Queries**
+```typescript
+// lib/database.ts
+import { createServerClient } from "@/lib/supabase"
+
+// Server-side queries automatically respect RLS
+export async function getUserPosts() {
+  const supabase = createServerClient()
+  
+  // This query automatically filters by the authenticated user
+  const { data: posts, error } = await supabase
+    .from("posts")
+    .select("*")
+    .order("created_at", { ascending: false })
+
+  if (error) throw error
+  return posts
+}
+
+// Client-side queries also respect RLS
+export async function getPostsClient() {
+  const supabase = createClient()
+  
+  const { data: posts, error } = await supabase
+    .from("posts")
+    .select("*")
+    .order("created_at", { ascending: false })
+
+  if (error) throw error
+  return posts
+}
+```
+
+## Session Management
+
+### **Middleware for Auth Routes**
+```typescript
+// middleware.ts
+import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs"
+import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
+
+export async function middleware(request: NextRequest) {
+  const res = NextResponse.next()
+  const supabase = createMiddlewareClient({ req: request, res })
+
+  const {
+    data: { session }
+  } = await supabase.auth.getSession()
+
+  // Protect dashboard routes
+  if (request.nextUrl.pathname.startsWith("/dashboard")) {
+    if (!session) {
+      return NextResponse.redirect(new URL("/auth/login", request.url))
+    }
+  }
+
+  // Redirect authenticated users away from auth pages
+  if (request.nextUrl.pathname.startsWith("/auth")) {
+    if (session) {
+      return NextResponse.redirect(new URL("/dashboard", request.url))
+    }
+  }
+
+  return res
+}
+
+export const config = {
+  matcher: ["/dashboard/:path*", "/auth/:path*"]
+}
+```
+
+### **Logout Component**
+```tsx
+// components/logout-button.tsx
+"use client"
+
+import { useAuth } from "@/components/auth-provider"
+import { useRouter } from "next/navigation"
+
+export default function LogoutButton() {
+  const { signOut } = useAuth()
+  const router = useRouter()
+
+  const handleSignOut = async () => {
+    await signOut()
+    router.push("/")
+    router.refresh()
+  }
+
+  return (
+    <button onClick={handleSignOut} className="btn btn-ghost">
+      Sign Out
+    </button>
+  )
+}
+```

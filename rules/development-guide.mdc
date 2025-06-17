@@ -1,0 +1,166 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+## Quick Reference
+
+### **Tech Stack**
+Next.js + TypeScript + Tailwind + DaisyUI + Supabase + Drizzle ORM
+
+### **Common Commands**
+```bash
+pnpm install              # Install dependencies
+pnpm dev                  # Start dev server (localhost:3000)
+pnpm db:generate          # Generate Drizzle schema types
+pnpm db:push             # Push schema to Supabase
+```
+
+### **Key Folders**
+- `/app` - Pages and layouts (App Router)
+- `/components` - Reusable UI components  
+- `/lib` - Utils, database client, Drizzle schemas
+- `/types` - TypeScript definitions
+- `/actions` - Server actions (DB actions in `/actions/db`)
+
+### **Required Environment Variables**
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+### **Basic Conventions**
+- Use `@/` for all internal imports
+- Use kebab-case for files: `example-component.tsx`
+- Server components: `"use server"` directive
+- Client components: `"use client"` directive
+- Actions end with `Action`: `createTodoAction`
+
+---
+
+## Tech Stack Overview
+
+**Full-Stack Next.js Application:**
+- **Frontend**: Next.js 14+ (App Router), TypeScript, Tailwind CSS, DaisyUI
+- **Backend**: Supabase (PostgreSQL + Auth + Storage), Drizzle ORM, Server Actions
+- **Key Features**: Real-time subscriptions, OAuth authentication, Row Level Security
+
+## Routine
+Follow this routine at the beginning of every new conversation or when starting a new project/feature to ensure organized development workflow.
+
+1. **Idea Analysis**
+   - If the user is requesting ideas or wants to create an application, ask for more specific details about their requirements and goals
+
+2. **MVP Planning & Development Strategy**
+   - **Lead MVP Definition Discussion**: Coordinate with the user to define the Minimum Viable Product (MVP)
+     - Ask about the core problem the application should solve
+     - Suggest the most essential features that demonstrate value
+     - Propose what users should be able to see and interact with in Phase 1
+     - Focus on "what's the simplest version that proves the concept?"
+   - **Phase-Based Planning**: Structure development in phases
+     - **Phase 1 (MVP)**: Core functionality that users can engage with immediately
+     - **Phase 2+**: Progressive enhancement based on user feedback and broader goals
+   - **MVP Scope Guidelines**: Suggest MVPs that include:
+     - Basic user interface with 1-3 core screens
+     - Essential user flow (e.g., sign up, main action, basic result)
+     - Simple database schema with core entities
+     - Basic authentication if needed
+     - Minimal but functional styling with DaisyUI components
+
+3. **Before Starting Development**
+   - Check if there is an existing plan in `tasks/plan.md`
+   - If no plan exists, generate a comprehensive coding todo list with:
+     - **Phase 1 (MVP) tasks** - prioritized for immediate user value
+     - Sequential, actionable todo items for the MVP
+     - Clear definition of "MVP complete" criteria
+     - **Future phases** - broader goals and advanced features
+     - Sub-tasks for complex features when necessary
+   - Write the complete plan to `tasks/plan.md` using this format:
+     ```
+     |Index|Status|Description                              |Priority|Depends|
+     |-----|------|-----------------------------------------|--------|-------|
+     |  1  |  ⏳  |Create database schema for users table   |High    |       |
+     |  2  |  ⏳  |Build user authentication with Supabase  |High    |1      |
+     |  3  |  ⏳  |Create user dashboard page               |Medium  |2      |
+     ```
+   - Be specific about files/components/modules to create or modify
+   - If working on something not covered in the existing plan, add new items to `tasks/plan.md`
+   - For each development step, explain to the user what you're implementing and why it's important for achieving their goals
+
+4. **Git Workflow & Commits**
+   - **Commit Frequency**: Create commits at logical milestones
+     - After completing individual features or components
+     - At the end of each development phase
+     - When reaching stable, working states
+     - For complex features, break into smaller commits per logical piece
+   - **Commit Message Standards**: Use clear, descriptive commit messages
+     - Format: `feat: add user authentication with Supabase`
+     - Include what was implemented and why
+     - Reference phase if applicable (e.g., `feat(mvp): implement core user dashboard`)
+   - **Phase-Based Commits**: At minimum, commit after each major phase completion
+
+5. **User Testing & Validation**
+   - **After Phase Completion**: Always prompt the user to test the current implementation
+   - **Provide Clear Testing Instructions**:
+     - Step-by-step guide on how to run/access the current version
+     - Specific features/flows to test
+     - Expected behavior for implemented features
+     - **Clearly communicate what should NOT work yet** (dummy data, placeholder features, future functionality)
+     - Any setup requirements or credentials needed
+   - **Testing Prompt Template**:
+     ```
+     "Phase [X] is complete! Please test the current implementation:
+     
+     🧪 TO TEST:
+     - [Specific features to test]
+     - [User flows to try]
+     
+     ✅ SHOULD WORK:
+     - [List of working features]
+     
+     ⚠️ NOT IMPLEMENTED YET:
+     - [Features using dummy data/placeholders]
+     - [Future phase functionality]
+     
+     📋 HOW TO RUN:
+     - [Step-by-step instructions]"
+     ```
+
+6. **After Completing Tasks**
+   - Update `tasks/current.md` with the current project state and progress
+   - Append completed tasks to `tasks/history.md` for project tracking
+   - Mark completed items as done in `tasks/plan.md`
+   - **Create appropriate Git commits** for the completed work
+   - **MVP Milestone Tracking**: Clearly note when Phase 1 (MVP) is complete and ready for user testing
+
+ALWAYS: solve one task/problem at a time, tick on the plan list and update the current plan
+
+## Development Guidelines
+
+### **Setup Requirements**
+- User must manually configure `.env.local` (AI cannot read/write environment files)
+- Prompt user for Supabase credentials during project setup
+- Use Supabase MCP (Context7) for enhanced database operations and documentation
+
+### **Code Standards**
+- **Routing**: Next.js App Router only (not Pages Router)
+- **Database**: Drizzle ORM for all operations, Server Actions for mutations
+- **Styling**: Tailwind/DaisyUI component patterns
+- **Types**: Proper TypeScript for all components and functions
+- **Error Handling**: Comprehensive error handling for database operations
+
+### **Development Constraints**
+⚠️ **Do not run commands** (`pnpm dev`, `pnpm build`) that might interrupt user's processes
+
+---
+
+## Technical Reference Files
+
+When working on specific technical implementations, reference these detailed pattern files:
+
+- **Design Patterns**: `rules/technical/design-patterns.mdc`
+- **Component Patterns**: `rules/technical/component-patterns.mdc`
+- **Database Schemas**: `rules/technical/database-patterns.mdc`
+- **Server Actions**: `rules/technical/server-actions.mdc`
+- **Authentication**: `rules/technical/auth-patterns.mdc`
+- **Environment Setup**: `rules/technical/environment-setup.mdc`

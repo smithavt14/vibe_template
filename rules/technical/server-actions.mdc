@@ -1,0 +1,583 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Server Actions Patterns
+
+## File Organization
+
+### **Action Structure**
+```
+actions/
+├── db/                   # Database-related actions
+│   ├── users-actions.ts  # User CRUD operations
+│   ├── posts-actions.ts  # Post CRUD operations
+│   └── ...
+├── auth-actions.ts       # Authentication actions
+├── email-actions.ts      # Email-related actions
+└── ...
+```
+
+### **Naming Conventions**
+- Files: `example-actions.ts`
+- Functions: `createExampleAction`, `getExampleAction`, `updateExampleAction`, `deleteExampleAction` 
+- Always end function names with `Action`
+- Order functions: Create, Read, Update, Delete (CRUD)
+
+## ActionState Pattern
+
+### **Type Definition**
+```typescript
+// types/actions-types.ts
+export type ActionState<T> =
+  | { isSuccess: true; message: string; data: T }
+  | { isSuccess: false; message: string; data?: never }
+```
+
+### **Usage Examples**
+```typescript
+// Success with data
+return {
+  isSuccess: true,
+  message: "User created successfully",
+  data: newUser
+}
+
+// Success without data (for delete operations)
+return {
+  isSuccess: true,
+  message: "User deleted successfully", 
+  data: undefined
+}
+
+// Error
+return {
+  isSuccess: false,
+  message: "Failed to create user"
+}
+```
+
+## Basic CRUD Patterns
+
+### **Complete CRUD Example**
+```typescript
+// actions/db/todos-actions.ts
+"use server"
+
+import { db } from "@/db/db"
+import { InsertTodo, SelectTodo, todosTable } from "@/db/schema"
+import { ActionState } from "@/types"
+import { eq, and, desc } from "drizzle-orm"
+
+// CREATE
+export async function createTodoAction(
+  todo: InsertTodo
+): Promise<ActionState<SelectTodo>> {
+  try {
+    const [newTodo] = await db.insert(todosTable).values(todo).returning()
+    
+    return {
+      isSuccess: true,
+      message: "Todo created successfully",
+      data: newTodo
+    }
+  } catch (error) {
+    console.error("Error creating todo:", error)
+    return { 
+      isSuccess: false, 
+      message: "Failed to create todo" 
+    }
+  }
+}
+
+// READ (single)
+export async function getTodoAction(
+  id: string,
+  userId: string
+): Promise<ActionState<SelectTodo>> {
+  try {
+    const todo = await db.query.todos.findFirst({
+      where: and(
+        eq(todosTable.id, id),
+        eq(todosTable.userId, userId) // User isolation
+      )
+    })
+
+    if (!todo) {
+      return { 
+        isSuccess: false, 
+        message: "Todo not found" 
+      }
+    }
+
+    return {
+      isSuccess: true,
+      message: "Todo retrieved successfully",
+      data: todo
+    }
+  } catch (error) {
+    console.error("Error getting todo:", error)
+    return { 
+      isSuccess: false, 
+      message: "Failed to get todo" 
+    }
+  }
+}
+
+// READ (multiple)
+export async function getTodosAction(
+  userId: string
+): Promise<ActionState<SelectTodo[]>> {
+  try {
+    const todos = await db.query.todos.findMany({
+      where: eq(todosTable.userId, userId),
+      orderBy: desc(todosTable.createdAt)
+    })
+
+    return {
+      isSuccess: true,
+      message: "Todos retrieved successfully",
+      data: todos
+    }
+  } catch (error) {
+    console.error("Error getting todos:", error)
+    return { 
+      isSuccess: false, 
+      message: "Failed to get todos" 
+    }
+  }
+}
+
+// UPDATE
+export async function updateTodoAction(
+  id: string,
+  userId: string,
+  data: Partial<InsertTodo>
+): Promise<ActionState<SelectTodo>> {
+  try {
+    const [updatedTodo] = await db
+      .update(todosTable)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(todosTable.id, id),
+        eq(todosTable.userId, userId) // User isolation
+      ))
+      .returning()
+
+    if (!updatedTodo) {
+      return { 
+        isSuccess: false, 
+        message: "Todo not found or unauthorized" 
+      }
+    }
+
+    return {
+      isSuccess: true,
+      message: "Todo updated successfully",
+      data: updatedTodo
+    }
+  } catch (error) {
+    console.error("Error updating todo:", error)
+    return { 
+      isSuccess: false, 
+      message: "Failed to update todo" 
+    }
+  }
+}
+
+// DELETE
+export async function deleteTodoAction(
+  id: string,
+  userId: string
+): Promise<ActionState<void>> {
+  try {
+    const result = await db
+      .delete(todosTable)
+      .where(and(
+        eq(todosTable.id, id),
+        eq(todosTable.userId, userId) // User isolation
+      ))
+      .returning({ id: todosTable.id })
+
+    if (result.length === 0) {
+      return { 
+        isSuccess: false, 
+        message: "Todo not found or unauthorized" 
+      }
+    }
+
+    return {
+      isSuccess: true,
+      message: "Todo deleted successfully",
+      data: undefined
+    }
+  } catch (error) {
+    console.error("Error deleting todo:", error)
+    return { 
+      isSuccess: false, 
+      message: "Failed to delete todo" 
+    }
+  }
+}
+```
+
+## Advanced Patterns
+
+### **Validation with Zod**
+```typescript
+"use server"
+
+import { z } from "zod"
+import { ActionState } from "@/types"
+
+const createUserSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  age: z.number().min(18, "Must be at least 18 years old")
+})
+
+export async function createUserAction(
+  formData: FormData
+): Promise<ActionState<SelectUser>> {
+  try {
+    // Validate input
+    const validatedData = createUserSchema.parse({
+      email: formData.get("email"),
+      name: formData.get("name"),
+      age: parseInt(formData.get("age") as string)
+    })
+
+    const [newUser] = await db
+      .insert(usersTable)
+      .values(validatedData)
+      .returning()
+
+    return {
+      isSuccess: true,
+      message: "User created successfully",
+      data: newUser
+    }
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return {
+        isSuccess: false,
+        message: error.errors[0].message
+      }
+    }
+
+    console.error("Error creating user:", error)
+    return { 
+      isSuccess: false, 
+      message: "Failed to create user" 
+    }
+  }
+}
+```
+
+### **Transaction Patterns**
+```typescript
+"use server"
+
+import { db } from "@/db/db"
+import { ActionState } from "@/types"
+
+export async function transferPostAction(
+  postId: string,
+  fromUserId: string,
+  toUserId: string
+): Promise<ActionState<void>> {
+  try {
+    await db.transaction(async (tx) => {
+      // Update post ownership
+      const [updatedPost] = await tx
+        .update(postsTable)
+        .set({ 
+          userId: toUserId,
+          updatedAt: new Date()
+        })
+        .where(and(
+          eq(postsTable.id, postId),
+          eq(postsTable.userId, fromUserId)
+        ))
+        .returning()
+
+      if (!updatedPost) {
+        throw new Error("Post not found or unauthorized")
+      }
+
+      // Log the transfer
+      await tx.insert(transferLogsTable).values({
+        postId,
+        fromUserId,
+        toUserId,
+        transferredAt: new Date()
+      })
+    })
+
+    return {
+      isSuccess: true,
+      message: "Post transferred successfully",
+      data: undefined
+    }
+  } catch (error) {
+    console.error("Error transferring post:", error)
+    return { 
+      isSuccess: false, 
+      message: "Failed to transfer post" 
+    }
+  }
+}
+```
+
+### **Bulk Operations**
+```typescript
+"use server"
+
+export async function bulkDeleteTodosAction(
+  todoIds: string[],
+  userId: string
+): Promise<ActionState<number>> {
+  try {
+    if (todoIds.length === 0) {
+      return {
+        isSuccess: false,
+        message: "No todos selected for deletion"
+      }
+    }
+
+    const result = await db
+      .delete(todosTable)
+      .where(and(
+        inArray(todosTable.id, todoIds),
+        eq(todosTable.userId, userId) // User isolation
+      ))
+      .returning({ id: todosTable.id })
+
+    return {
+      isSuccess: true,
+      message: `${result.length} todos deleted successfully`,
+      data: result.length
+    }
+  } catch (error) {
+    console.error("Error bulk deleting todos:", error)
+    return { 
+      isSuccess: false, 
+      message: "Failed to delete todos" 
+    }
+  }
+}
+```
+
+## Authentication Integration
+
+### **User Context Pattern**
+```typescript
+"use server"
+
+import { auth } from "@/lib/auth"
+import { ActionState } from "@/types"
+
+export async function getCurrentUserTodosAction(): Promise<ActionState<SelectTodo[]>> {
+  try {
+    const { userId } = await auth()
+    
+    if (!userId) {
+      return { 
+        isSuccess: false, 
+        message: "Authentication required" 
+      }
+    }
+
+    const todos = await db.query.todos.findMany({
+      where: eq(todosTable.userId, userId),
+      orderBy: desc(todosTable.createdAt)
+    })
+
+    return {
+      isSuccess: true,
+      message: "Todos retrieved successfully",
+      data: todos
+    }
+  } catch (error) {
+    console.error("Error getting user todos:", error)
+    return { 
+      isSuccess: false, 
+      message: "Failed to get todos" 
+    }
+  }
+}
+```
+
+### **Role-Based Actions**
+```typescript
+"use server"
+
+import { auth } from "@/lib/auth"
+
+export async function adminDeleteUserAction(
+  targetUserId: string
+): Promise<ActionState<void>> {
+  try {
+    const { userId, role } = await auth()
+    
+    if (!userId) {
+      return { isSuccess: false, message: "Authentication required" }
+    }
+
+    if (role !== "admin") {
+      return { isSuccess: false, message: "Admin access required" }
+    }
+
+    await db.delete(usersTable).where(eq(usersTable.id, targetUserId))
+
+    return {
+      isSuccess: true,
+      message: "User deleted successfully",
+      data: undefined
+    }
+  } catch (error) {
+    console.error("Error deleting user:", error)
+    return { 
+      isSuccess: false, 
+      message: "Failed to delete user" 
+    }
+  }
+}
+```
+
+## Error Handling
+
+### **Database Constraint Errors**
+```typescript
+"use server"
+
+export async function createUniqueSlugPostAction(
+  data: InsertPost
+): Promise<ActionState<SelectPost>> {
+  try {
+    const [newPost] = await db.insert(postsTable).values(data).returning()
+
+    return {
+      isSuccess: true,
+      message: "Post created successfully",
+      data: newPost
+    }
+  } catch (error: any) {
+    // Handle unique constraint violation
+    if (error.code === "23505" && error.constraint?.includes("slug")) {
+      return {
+        isSuccess: false,
+        message: "A post with this slug already exists"
+      }
+    }
+
+    // Handle foreign key constraint violation
+    if (error.code === "23503") {
+      return {
+        isSuccess: false,
+        message: "Referenced resource not found"
+      }
+    }
+
+    console.error("Error creating post:", error)
+    return { 
+      isSuccess: false, 
+      message: "Failed to create post" 
+    }
+  }
+}
+```
+
+### **Rate Limiting**
+```typescript
+"use server"
+
+import { Ratelimit } from "@upstash/ratelimit"
+import { Redis } from "@upstash/redis"
+
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(10, "10 s")
+})
+
+export async function rateLimitedCreatePostAction(
+  data: InsertPost
+): Promise<ActionState<SelectPost>> {
+  try {
+    const { userId } = await auth()
+    
+    if (!userId) {
+      return { isSuccess: false, message: "Authentication required" }
+    }
+
+    // Check rate limit
+    const { success } = await ratelimit.limit(userId)
+    
+    if (!success) {
+      return {
+        isSuccess: false,
+        message: "Rate limit exceeded. Please try again later."
+      }
+    }
+
+    const [newPost] = await db
+      .insert(postsTable)
+      .values({ ...data, userId })
+      .returning()
+
+    return {
+      isSuccess: true,
+      message: "Post created successfully",
+      data: newPost
+    }
+  } catch (error) {
+    console.error("Error creating post:", error)
+    return { 
+      isSuccess: false, 
+      message: "Failed to create post" 
+    }
+  }
+}
+```
+
+## Testing Server Actions
+
+### **Unit Test Pattern**
+```typescript
+// __tests__/actions/todos-actions.test.ts
+import { describe, it, expect, beforeEach } from "vitest"
+import { createTodoAction, getTodoAction } from "@/actions/db/todos-actions"
+
+describe("Todo Actions", () => {
+  beforeEach(async () => {
+    // Clean up test database
+    await db.delete(todosTable)
+  })
+
+  it("should create a todo successfully", async () => {
+    const todoData = {
+      userId: "test-user-id",
+      content: "Test todo",
+      completed: false
+    }
+
+    const result = await createTodoAction(todoData)
+
+    expect(result.isSuccess).toBe(true)
+    expect(result.data?.content).toBe("Test todo")
+  })
+
+  it("should handle creation errors", async () => {
+    const invalidData = {} as any
+
+    const result = await createTodoAction(invalidData)
+
+    expect(result.isSuccess).toBe(false)
+    expect(result.message).toContain("Failed")
+  })
+})
+```

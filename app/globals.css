@@ -1,0 +1,59 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: lofi --default, sunset --prefersdark;
+}
+
+:root {
+  --navbar-desktop-height: 64px;
+  --full-screen: calc(100vh - var(--navbar-desktop-height));
+}
+
+
+/* Typography System - Opinionated font sizes and styles */
+@layer base {
+  /* Font Family Setup */
+  html {
+    font-family: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  /* Body Text */
+  body {
+    @apply text-base leading-relaxed text-base-content;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  /* Headings - Semantic and consistent scaling */
+  h1 {
+    @apply text-4xl font-black leading-tight mb-6;
+    font-size: clamp(2rem, 5vw, 2.5rem);
+  }
+
+  h2 {
+    @apply text-3xl font-black leading-tight mb-5;
+    font-size: clamp(1.5rem, 4vw, 2rem);
+  }
+
+  h3 {
+    @apply text-2xl font-bold leading-snug mb-4;
+    font-size: clamp(1.25rem, 3vw, 1.5rem);
+  }
+
+  h4 {
+    @apply text-xl font-bold leading-snug mb-3;
+  }
+
+  h5 {
+    @apply text-lg font-bold leading-normal mb-3;
+  }
+
+  h6 {
+    @apply text-base font-medium leading-normal mb-2;
+  }
+
+  /* Paragraphs */
+  p {
+    @apply text-base leading-relaxed;
+  }
+}
