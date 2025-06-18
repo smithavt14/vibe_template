@@ -1,112 +1,85 @@
 # Vibe Template
 
-A sophisticated Next.js template with MVP-focused development workflow.
+**An AI-first Next.js template designed for agentic development with structured workflows and intelligent code assistance.**
+
+## 🤖 Built for AI-Assisted Development
+
+This template transforms how you build applications by providing AI agents with comprehensive rules, patterns, and workflows to deliver consistent, high-quality code assistance. Every aspect is designed to help AI understand your project structure and guide you through structured development.
+
+### Key Features
+
+- **🎯 6-Step Agentic Workflow**: From idea analysis to testing validation
+- **📋 MVP-Focused Development**: Phase-based planning with clear milestones  
+- **🔧 Intelligent Code Patterns**: Pre-configured rules for consistent development
+- **📊 Progress Tracking**: Automated task management and git workflows
+- **🚀 Production-Ready Stack**: Next.js + TypeScript + Supabase + Drizzle ORM
 
 ## Quick Start
-1. Clone this template
-2. `pnpm install`
-3. Copy `.env.example` to `.env`
-4. **[Set up Supabase](docs/supabase-setup.md)** - Follow the detailed guide for database setup
-5. `pnpm dev`
 
-## What's Included
-- Pre-configured Next.js + TypeScript + Tailwind + DaisyUI
-- Supabase + Drizzle ORM setup
-- Comprehensive development rules in `/rules`
-- MVP-focused development workflow
-- Example components and patterns
+1. **Clone and install:**
+   ```bash
+   git clone <this-repo>
+   pnpm install
+   ```
 
-## Documentation
-- **[Supabase Setup Guide](docs/supabase-setup.md)** - Complete database and authentication setup
-- **[Development Guide](rules/development-guide.mdc)** - MVP-focused development workflow
-- **[Technical Rules](rules/technical/)** - Development patterns and best practices
+2. **Set up your backend:**
+   - Follow the **[Supabase Setup Guide](docs/supabase-setup.md)** for database configuration
+   - Copy `.env.example` to `.env` and add your credentials
 
-## DaisyUI Integration
+3. **Start building:**
+   ```bash
+   pnpm dev
+   ```
+   The AI agent will guide you through structured development from here.
 
-This template uses [DaisyUI](https://daisyui.com/components/) as our primary UI component library, providing 61+ semantic components that work beautifully with Tailwind CSS.
+## 🏗️ The Agentic Development Process
 
-### Why DaisyUI over shadcn/ui?
+When you start a new feature or project, the AI agent follows a proven 6-step routine:
 
-**DaisyUI Advantages:**
-- **Semantic HTML**: Uses proper semantic HTML with meaningful class names (`btn`, `card`, `hero`)
-- **Zero JavaScript**: Pure CSS components with no JavaScript dependencies
-- **Theme System**: Built-in theming with 32+ themes including dark mode support
-- **Smaller Bundle**: No component copying means smaller bundle sizes
-- **Design Consistency**: All components follow the same design language
-- **Accessibility**: Built with accessibility in mind from the ground up
+1. **💡 Idea Analysis** - Clarifies requirements and goals
+2. **📋 MVP Planning** - Defines phases and core features  
+3. **⚙️ Development Planning** - Creates detailed task lists
+4. **🔨 Implementation** - Builds one feature at a time
+5. **🧪 Testing & Validation** - Provides clear testing instructions
+6. **📈 Progress Review** - Updates tracking and plans next steps
 
-**vs shadcn/ui:**
-- shadcn/ui requires copying components into your codebase
-- DaisyUI provides ready-to-use components with consistent theming
-- Better for rapid prototyping and MVP development
-- Easier maintenance with centralized updates
+*See the complete process in [AI Agent Guide](docs/ai-agent-guide.md)*
 
-### Current Theme Setup
+## 🛠️ Tech Stack
 
-The template is configured with:
-- **Light theme**: `lofi` - Clean, minimal design
-- **Dark theme**: `sunset` - Warm, vibrant colors
-- **Theme switching**: Automatic with the `ThemeController` component
+**Frontend:** Next.js 14+ (App Router) • TypeScript • Tailwind CSS • DaisyUI  
+**Backend:** Supabase (PostgreSQL + Auth + Storage) • Drizzle ORM • Server Actions  
+**Development:** AI-guided workflows • Structured planning • Automated tracking
 
-### Using DaisyUI Components
+## 📚 Documentation
 
-1. **Browse components**: Visit [daisyui.com/components](https://daisyui.com/components/)
-2. **Choose a component**: Pick from 61+ available components
-3. **Copy the HTML**: Use the semantic class names directly
-4. **Create custom components**: Wrap in your own React components
+- **[🤖 AI Agent Guide](docs/ai-agent-guide.md)** - How to work effectively with AI assistance
+- **[⚡ Supabase Setup](docs/supabase-setup.md)** - Complete backend configuration
+- **[📋 Development Rules](rules/)** - Comprehensive development patterns and workflows
 
-### Example: Creating a Custom Card Component
+## 🎨 UI Components with DaisyUI
 
-```tsx
-// components/feature-card.tsx
-interface FeatureCardProps {
-  title: string
-  description: string
-  icon?: React.ReactNode
-}
+The template includes [DaisyUI](https://daisyui.com/components/) for rapid UI development:
 
-export default function FeatureCard({ title, description, icon }: FeatureCardProps) {
-  return (
-    <div className="card bg-base-100 shadow-xl">
-      <div className="card-body">
-        {icon && <div className="text-2xl mb-2">{icon}</div>}
-        <h2 className="card-title">{title}</h2>
-        <p>{description}</p>
-        <div className="card-actions justify-end">
-          <button className="btn btn-primary">Learn More</button>
-        </div>
-      </div>
-    </div>
-  )
-}
-```
+- **61+ semantic components** (`btn`, `card`, `hero`)
+- **Zero JavaScript** - Pure CSS with Tailwind
+- **Built-in theming** - Light (`lofi`) and dark (`sunset`) themes
+- **Theme switching** - Automatic with `ThemeController`
 
-### Available Component Categories
+Browse components at [daisyui.com/components](https://daisyui.com/components/) and use semantic class names directly.
 
-From [daisyui.com/components](https://daisyui.com/components/):
+## 🚀 Why This Template?
 
-**Actions**: Button, Dropdown, Modal, Swap, Theme Controller  
-**Data Display**: Accordion, Avatar, Badge, Card, Carousel, Chat bubble, Collapse, Countdown, Table, Timeline  
-**Navigation**: Breadcrumbs, Dock, Link, Menu, Navbar, Pagination, Steps, Tabs  
-**Feedback**: Alert, Loading, Progress, Skeleton, Toast, Tooltip  
-**Data Input**: Calendar, Checkbox, File Input, Radio, Range, Rating, Select, Input, Textarea, Toggle  
-**Layout**: Divider, Drawer, Footer, Hero, Indicator, Join, Mask, Stack  
-**Mockup**: Browser, Code, Phone, Window
+**For Developers:**
+- Skip boilerplate setup and focus on building features
+- Follow proven patterns for scalable application architecture
+- Get structured guidance from idea to deployment
 
-### Theme Customization
+**For AI-Assisted Development:**
+- Comprehensive rules system for consistent code generation
+- Structured workflows that AI can follow and execute
+- Clear patterns and conventions for better AI understanding
 
-Themes are configured in `app/globals.css`:
-```css
-@plugin "daisyui" {
-  themes: lofi --default, sunset --prefersdark;
-}
-```
+---
 
-Available themes: light, dark, cupcake, bumblebee, emerald, corporate, synthwave, retro, cyberpunk, valentine, halloween, garden, forest, aqua, lofi, pastel, fantasy, wireframe, black, luxury, dracula, cmyk, autumn, business, acid, lemonade, night, coffee, winter, dim, nord, sunset, and more.
-
-## Development Workflow
-See `/rules/development-guide.mdc` for the complete development process.
-
-## To Do
-- Add DaisyUI Docs
-- Add Vercel Deployment Docs
+**Ready to build?** Start by sharing your project idea with an AI assistant. The template's built-in rules will guide you through structured development from concept to completion.
