@@ -6,288 +6,218 @@ This **Vibe Template** is specifically designed for **AI-assisted development**.
 
 ## 🤖 AI-First Architecture
 
-### What Makes This Template Special
+The AI agent follows a **6-step routine** for every new project or feature to ensure organized, successful development:
 
-- **Smart Rules System**: Pre-configured development patterns that AI agents can follow
-- **Structured Conventions**: Consistent file organization and naming patterns
-- **Context-Aware Documentation**: Technical patterns that guide AI decision-making
-- **Rapid Prototyping**: MVP-focused development workflow designed for AI collaboration
+### Step 1: 🎯 Idea Analysis & Requirements Gathering
 
-### Key Benefits
+**What the agent does:**
+- Analyzes your idea or feature request
+- Asks clarifying questions about your goals and requirements
+- Identifies the core problem your application should solve
 
-✅ **Consistent Code Quality** - AI follows established patterns  
-✅ **Faster Development** - Reduced back-and-forth with clear conventions  
-✅ **Better Collaboration** - Standardized approaches across features  
-✅ **Maintainable Codebase** - Well-documented patterns and structures  
-
----
-
-## 📋 The Cursor Rules System
-
-The `.cursor/rules` directory contains the "brain" of your AI assistant. These files teach AI agents how to work with your specific project.
-
-### Core Files
-
-#### `development-guide.mdc`
-The **master playbook** for AI development workflow:
-
-```tree
-📁 rules/
-├── development-guide.mdc     ← Main workflow & conventions
-└── technical/               ← Detailed implementation patterns
-    ├── auth-patterns.mdc
-    ├── component-patterns.mdc
-    ├── database-patterns.mdc
-    ├── design-patterns.mdc
-    ├── environment-setup.mdc
-    └── server-actions.mdc
-```
-
-#### Technical Pattern Files
-Specialized guides for specific aspects:
-- **Auth Patterns**: Supabase authentication, RLS, session management
-- **Component Patterns**: React component structure, client/server patterns
-- **Database Patterns**: Drizzle ORM, schema design, CRUD operations
-- **Design Patterns**: DaisyUI components, responsive design, accessibility
-- **Server Actions**: Form handling, validation, error management
-
-### How AI Agents Use These Rules
-
-1. **Project Understanding**: Agents read the rules to understand your stack and conventions
-2. **Pattern Following**: They apply consistent patterns from the technical guides
-3. **Workflow Adherence**: They follow the development routine from the main guide
-4. **Context Awareness**: They understand file organization and naming conventions
-
----
-
-## 🚀 Getting Started Workflow
-
-### Step 1: Idea to MVP Planning
-
-When starting a new project or feature:
-
-1. **Share Your Idea**: Describe what you want to build
-2. **AI-Guided MVP Definition**: The agent will help you define the Minimum Viable Product
-3. **Phase-Based Planning**: Break down development into manageable phases
-4. **Task Creation**: Generate a comprehensive todo list in `tasks/plan.md`
-
-**Example Interaction:**
+**Example interaction:**
 ```text
 User: "I want to build a task management app"
 
-AI: "I'd love to help you build a task management app! Let me gather some details to ensure we create exactly what you need...[continued]"
-```
+Agent: "I'd love to help you build a task management app! 
+Let me gather some details to ensure we create exactly what you need:
 
-### Step 2: Development Phases
-
-The AI follows this routine for each development session:
-
-1. **Check Current Plan**: Review `tasks/plan.md` for next priorities
-2. **Implement Features**: Follow technical patterns for consistent code
-3. **Update Progress**: Mark completed tasks and update current state
-4. **Test & Validate**: Provide clear testing instructions
-5. **Git Commits**: Create meaningful commits at logical milestones
-
----
-
-## 💡 Best Practices for AI Collaboration
-
-### Effective Communication
-
-**✅ DO:**
-- Be specific about your requirements
-- Ask for MVP definition early
-- Request testing instructions
-- Provide feedback on generated code
-
-**❌ DON'T:**
-- Ask for large, complex features all at once
-- Skip the planning phase
-- Ignore the testing/validation steps
-
-### Leveraging the Rules System
-
-**When to Reference Rules:**
-```
-"Follow the component patterns to create a new dashboard"
-"Use the auth patterns for user registration"
-"Apply database patterns for the user profile schema"
-```
-
-**The AI automatically applies rules, but you can be explicit when needed.**
-
-### Workflow Optimization
-
-1. **Start Small**: Always begin with MVP definition
-2. **Phase Development**: Build in logical increments
-3. **Test Frequently**: Validate each phase before moving forward
-4. **Document Changes**: Keep the rules updated as your project evolves
-
----
-
-## 🛠️ Technical Stack & Conventions
-
-### Core Technologies
-- **Frontend**: Next.js 14+ (App Router) + TypeScript
-- **Styling**: Tailwind CSS + DaisyUI
-- **Backend**: Supabase (PostgreSQL + Auth + Storage)
-- **ORM**: Drizzle ORM
-- **Forms**: Server Actions
-
-### File Organization
-```File System
-app/                    # Next.js App Router pages
-├── (route)/           # Route groups
-├── _components/       # Route-specific components
-└── globals.css        # Global styles
-
-components/            # Shared UI components
-├── ui/               # Base UI components
-└── features/         # Feature-specific components
-
-db/                   # Database layer
-├── schema/           # Drizzle schemas
-├── migrations/       # Auto-generated
-└── db.ts            # Database client
-
-actions/              # Server actions
-├── db/              # Database operations
-└── ...              # Other server actions
-
-lib/                  # Utilities
-├── supabase/        # Supabase clients
-├── env.ts           # Environment validation
-└── ...
-
-types/               # TypeScript definitions
-rules/               # AI development patterns (this guide!)
-```
-
-### Naming Conventions
-- **Files**: `kebab-case.tsx`
-- **Components**: `PascalCase`
-- **Actions**: `createExampleAction`
-- **Database**: `snake_case` tables, `camelCase` TypeScript
-
----
-
-## 📚 Common Development Patterns
-
-### Creating New Features
-
-1. **Database First**: Design schema in `db/schema/`
-2. **Server Actions**: Create CRUD operations in `actions/db/`
-3. **Components**: Build UI components following design patterns
-4. **Pages**: Compose server/client components
-
-### Authentication Flow
-
-1. **Setup**: Supabase auth configuration
-2. **Middleware**: Protect routes with authentication
-3. **Components**: Login/signup forms with proper validation
-4. **RLS**: Row Level Security for data isolation
-
-### Form Handling
-
-1. **Server Actions**: Handle form submissions server-side
-2. **Validation**: Use Zod for type-safe validation
-3. **Error Handling**: Consistent error states and messages
-4. **UX**: Loading states and success feedback
-
----
-
-## 🎯 Example Workflows
-
-### Building a Blog Feature
-
-**Phase 1 (MVP):**
-```
-1. ⏳ Create posts schema (title, content, user_id)
-2. ⏳ Build post creation form
-3. ⏳ Create posts listing page
-4. ⏳ Add basic post viewing
-```
-
-**AI Implementation:**
-- Follows database patterns for schema design
-- Uses server actions for CRUD operations
-- Applies component patterns for UI
-- Implements auth patterns for user isolation
-
-### Adding User Profiles
-
-**Phase 1 (MVP):**
-```
-1. ⏳ Extend user schema with profile fields
-2. ⏳ Create profile editing form
-3. ⏳ Build profile display component
-4. ⏳ Add profile navigation
-```
-
-**AI Implementation:**
-- Updates existing schema following database patterns
-- Creates forms using design patterns
-- Implements proper validation and error handling
-
----
-
-## 🔧 Customizing the Rules
-
-### Adding New Patterns
-
-When you establish new conventions in your project:
-
-1. **Document the Pattern**: Add to appropriate technical file
-2. **Update Development Guide**: Include in main workflow if needed
-3. **Train the AI**: Reference new patterns in future conversations
-
-### Project-Specific Rules
-
-Create additional `.mdc` files for your specific domain:
-
-```
-rules/
-├── development-guide.mdc
-├── technical/
-│   └── ... (existing files)
-└── project-specific/
-    ├── business-logic.mdc
-    ├── api-integrations.mdc
-    └── deployment.mdc
+1. Who will be using this app? (personal, team, business)
+2. What's the main pain point you're trying to solve?
+3. What are the 2-3 most essential features users need?"
 ```
 
 ---
 
-## 🎉 Success Indicators
+### Step 2: 📋 MVP Planning & Development Strategy
 
-You'll know the AI collaboration is working well when:
+**What the agent does:**
+- **Leads MVP Definition Discussion**: Helps you define the Minimum Viable Product
+- **Phase-Based Planning**: Breaks development into manageable phases
+- **Scope Management**: Focuses on "what's the simplest version that proves the concept?"
 
-- **Consistent Code**: All components follow the same patterns
-- **Efficient Development**: Features are built quickly with minimal revisions
-- **Clear Progress**: Each phase delivers working, testable functionality
-- **Maintainable Results**: Code is well-organized and follows conventions
+**MVP Guidelines the agent follows:**
+- Basic user interface with 1-3 core screens
+- Essential user flow (sign up → main action → basic result)
+- Simple database schema with core entities
+- Basic authentication if needed
+- Minimal but functional styling with DaisyUI components
+
+**Example MVP definition:**
+```text
+For a task management app:
+
+Phase 1 (MVP):
+- User can sign up/login
+- User can create, view, and mark tasks as complete
+- Simple dashboard showing active tasks
+- Basic task creation form
+
+Phase 2+ (Future):
+- Task categories, due dates, priorities
+- Team collaboration, sharing
+- Advanced filtering and search
+```
 
 ---
 
-## 📞 Getting Help
+### Step 3: 📝 Development Planning & Task Creation
 
-### Troubleshooting
+**What the agent does:**
+- Checks for existing plan in `tasks/plan.md`
+- Creates comprehensive coding todo list if none exists
+- Writes specific, actionable tasks in priority order
+- Defines clear "MVP complete" criteria
 
-**If the AI isn't following patterns:**
-- Reference specific rule files: "Use the auth patterns for this"
-- Be more explicit: "Follow the component structure from rules/technical/component-patterns.mdc"
+**Planning format the agent uses:**
+```text
+|Index|Status|Description                              |Priority|Depends|
+|-----|------|-----------------------------------------|--------|-------|
+|  1  |  ⏳  |Create database schema for tasks table   |High    |       |
+|  2  |  ⏳  |Build user authentication with Supabase  |High    |       |
+|  3  |  ⏳  |Create task creation form component      |High    |1,2    |
+|  4  |  ⏳  |Build task dashboard page                |Medium  |1,2    |
+```
 
-**If development gets off-track:**
-- Return to MVP planning: "Let's refocus on the Phase 1 requirements"
-- Check the plan: "What's next in tasks/plan.md?"
-
-### Extending This Guide
-
-This guide evolves with your project. Update it when you:
-- Establish new development patterns
-- Add new technologies or tools
-- Discover better AI collaboration techniques
+**For each task, the agent specifies:**
+- Exact files/components to create or modify
+- Dependencies between tasks
+- Why each task is important for your goals
 
 ---
 
-**Ready to build something amazing? Start by sharing your idea and let the AI guide you through MVP planning!** 🚀 
+### Step 4: ⚙️ Implementation & Git Workflow
+
+**What the agent does:**
+- Solves **one task at a time** from the plan
+- Follows established code patterns and conventions
+- Creates commits at logical milestones
+- Updates progress tracking files
+
+**Commit strategy the agent follows:**
+- **Frequency**: After completing individual features/components
+- **Messages**: Clear, descriptive format like `feat: add user authentication with Supabase`
+- **Milestones**: Always commits after each major phase completion
+
+**Progress tracking:**
+- ✅ Marks completed tasks in `tasks/plan.md`
+- 📝 Updates `tasks/current.md` with current state
+- 📚 Appends completed work to `tasks/history.md`
+
+---
+
+### Step 5: 🧪 Testing & Validation
+
+**What the agent does:**
+- Prompts you to test after each phase completion
+- Provides clear, step-by-step testing instructions
+- Clearly communicates what should and shouldn't work yet
+
+**Testing template the agent uses:**
+```text
+Phase 1 is complete! Please test the current implementation:
+
+🧪 TO TEST:
+- Sign up with email/password
+- Create a new task
+- Mark task as complete
+
+✅ SHOULD WORK:
+- User registration and login
+- Basic task creation and completion
+- Task list display
+
+⚠️ NOT IMPLEMENTED YET:
+- Task categories (Phase 2)
+- Due dates (Phase 2)
+- Team sharing (Phase 3)
+
+📋 HOW TO RUN:
+1. Run `pnpm dev`
+2. Navigate to localhost:3000
+3. Click "Sign Up" to create account
+```
+
+---
+
+### Step 6: 🔄 Progress Review & Next Steps
+
+**What the agent does:**
+- Reviews completed phase against original goals
+- Updates all project tracking files
+- Clearly marks MVP milestones
+- Plans next phase based on your feedback
+
+**End-of-phase checklist:**
+- ✅ All planned tasks completed
+- ✅ Code committed with meaningful messages
+- ✅ Progress files updated
+- ✅ Testing instructions provided
+- ✅ User feedback collected
+
+---
+
+## 📊 Project Tracking System
+
+The agent maintains three key files to track your project:
+
+### `tasks/plan.md`
+- **Master todo list** with all planned features
+- **Status tracking** (⏳ Pending, 🔄 In Progress, ✅ Complete)
+- **Dependencies** showing task relationships
+- **Priorities** to guide development order
+
+### `tasks/current.md`
+- **Current project state** and active work
+- **Recent progress** and immediate next steps
+- **Blockers or decisions** that need your input
+
+### `tasks/history.md`
+- **Completed work log** for project history
+- **Milestone tracking** showing major achievements
+- **Reference for decisions** made during development
+
+---
+
+## 💡 How to Work Effectively with the Agent
+
+### ✅ Best Practices
+
+**For Planning:**
+- Be specific about your goals and requirements
+- Trust the MVP definition process
+- Don't skip the planning phase
+
+**During Development:**
+- Test each phase when prompted
+- Provide feedback on the implementation
+- Ask questions if something isn't clear
+
+**For Communication:**
+- Start new chats after major phases to keep context fresh
+- Reference specific rule files when needed: "Use the auth patterns for user registration"
+- Return to MVP focus if development gets off-track: "Let's refocus on Phase 1 requirements"
+
+### 🚫 What to Avoid
+
+- Asking for large, complex features all at once
+- Skipping testing and validation steps
+- Jumping ahead without completing current phase
+- Ignoring the planning structure
+
+---
+
+## 🎯 Key Agent Principles
+
+The agent **always follows** these core principles:
+
+1. **One Task at a Time**: Solves individual tasks before moving to the next
+2. **MVP First**: Prioritizes core functionality that users can engage with immediately
+3. **Phase-Based Development**: Builds in logical, testable increments
+4. **Clear Communication**: Explains what's being implemented and why
+5. **Progress Tracking**: Maintains accurate project state and history
+6. **User Validation**: Ensures each phase works before proceeding
+
+---
+
+**Ready to build? Share your idea and let the agent guide you through the structured development process!** 🚀 

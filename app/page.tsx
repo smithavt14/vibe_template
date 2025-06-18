@@ -212,6 +212,42 @@ export default async function Home() {
             </div>
           </div>
 
+          {/* Clean Up Template Instructions */}
+          <div className="mt-8 max-w-2xl mx-auto">
+            <div className="card bg-info/10 border border-info/20 shadow-xl">
+              <div className="card-body">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="badge badge-info gap-2">
+                    <svg className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    Ready to Build
+                  </div>
+                </div>
+                
+                <h3 className="card-title justify-center text-xl mb-4">
+                  🧹 Remove Template Files When Ready
+                </h3>
+                
+                <p className="text-base-content/80 mb-4 text-center">
+                  When you&apos;re ready to start building your own app, you can safely remove the template onboarding UI:
+                </p>
+                
+                <div className="mockup-code text-sm mb-4">
+                  <pre data-prefix="$" className="text-info"><code>rm -rf app/docs</code></pre>
+                  <pre data-prefix="$" className="text-info"><code>rm app/page.tsx</code></pre>
+                  <pre data-prefix="$" className="text-info"><code># Then create your own app/page.tsx</code></pre>
+                </div>
+                
+                <div className="alert alert-info">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <span className="text-sm">
+                    This removes the welcome page and docs routes. You can still reference the <code>/docs</code> directory 
+                    throughout the build process and remove it when you want to deploy your app.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Next Steps */}
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
             <div className="card bg-base-200 shadow">
@@ -230,10 +266,10 @@ export default async function Home() {
               <div className="card-body text-center">
                 <h3 className="card-title justify-center text-lg">🚀 Start Building</h3>
                 <p className="text-sm text-base-content/70 mb-4">
-                  Ready to customize this template for your needs? You can safely delete this welcome page.
+                  Ready to customize this template for your needs? Check the cleanup guide above!
                 </p>
                 <div className="card-actions justify-center">
-                  <a href="/rules/development-guide" className="btn btn-sm btn-outline">Development Guide</a>
+                  <a href="/docs/ai-agent-guide" className="btn btn-sm btn-outline">Development Guide</a>
                 </div>
               </div>
             </div>

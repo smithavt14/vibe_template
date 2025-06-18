@@ -106,3 +106,7 @@ Available themes: light, dark, cupcake, bumblebee, emerald, corporate, synthwave
 
 ## Development Workflow
 See `/rules/development-guide.mdc` for the complete development process.
+
+## To Do
+- Add DaisyUI Docs
+- Add Vercel Deployment Docs
