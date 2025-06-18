@@ -18,7 +18,7 @@ This guide will help you set up Supabase for your Vibe Template project using th
    - In your project dashboard, click the **"Connect"** button in the header
    - In the modal that opens, go to the **"App Frameworks"** tab
    - Select **"Next.js"** and **"App Router"**
-   - Copy the `.env.local` content provided
+   - Copy the `.env` content provided
    
    **Step 2: Get your Database URL**
    - Still in the Connect modal, go to the **"ORM"** tab

@@ -1,20 +1,41 @@
 import { drizzle } from "drizzle-orm/postgres-js"
 import postgres from "postgres"
-import { env } from "@/lib/env"
 import * as schema from "@/db/schema"
 
-// Handle missing environment configuration gracefully
-const getDatabaseUrl = () => {
-  if (!env?.DATABASE_URL) {
-    throw new Error("DATABASE_URL is required for direct database access. Please check your environment configuration.")
-  }
-  return env.DATABASE_URL
+// Create a mock database for when DATABASE_URL is not configured
+const createMockDb = () => {
+  return new Proxy({}, {
+    get: () => {
+      throw new Error("Database not configured. Please set DATABASE_URL environment variable.")
+    }
+  })
 }
 
-// Disable prefetch as it is not supported for "Transaction" pool mode
-const client = postgres(getDatabaseUrl(), { prepare: false })
+// Handle missing environment configuration gracefully
+const getDatabaseConnection = () => {
+  // Check if we're on server and have DATABASE_URL
+  if (typeof window !== 'undefined') {
+    // Client-side - return mock
+    return createMockDb()
+  }
+  
+  // Server-side - check for DATABASE_URL
+  if (!process.env.DATABASE_URL) {
+    console.warn("DATABASE_URL not configured. Database operations will not work.")
+    return createMockDb()
+  }
+  
+  try {
+    // Disable prefetch as it is not supported for "Transaction" pool mode
+    const client = postgres(process.env.DATABASE_URL, { prepare: false })
+    return drizzle(client, { 
+      schema,
+      logger: process.env.NODE_ENV === "development"
+    })
+  } catch (error) {
+    console.error("Failed to connect to database:", error)
+    return createMockDb()
+  }
+}
 
-export const db = drizzle(client, { 
-  schema,
-  logger: process.env.NODE_ENV === "development"
-}) 
+export const db = getDatabaseConnection() 
